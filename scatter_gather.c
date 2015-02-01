@@ -30,7 +30,7 @@ int main(int argc, char *argv[]){
 	for(i=0;i<count;i++)
 	    total=total+myray[i];
 	printf("myid = %d total = %d\n",myid,total);
-    MPI_Gather(&total, 1, MPI_INT, back_ray, 1, MPI_INT, mpi_root, MPI_COMM_WORLD);
+	MPI_Gather(&total, 1, MPI_INT, back_ray, 1, MPI_INT, mpi_root, MPI_COMM_WORLD);
 
 	if(myid == mpi_root){
 		total=0;
