@@ -1,7 +1,3 @@
-// 1. Make data
-// 2. buffer should be contiguous, mat is 2d matrix
-// 3. 
-
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
