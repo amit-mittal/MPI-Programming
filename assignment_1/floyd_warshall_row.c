@@ -1,3 +1,5 @@
+// TODO see if code can be made more faster
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <math.h>
@@ -5,6 +7,7 @@
 
 #define INF 1000000000
 #define min(a, b) (a)<(b) ? a : b
+#define max(a, b) (a)<(b) ? b : a
 
 // Taking input the weight matrix
 void take_input(int **mat, int n)
@@ -15,7 +18,7 @@ void take_input(int **mat, int n)
 	{
 		for (j = 0; j < n; ++j)
 		{
-			scanf("%d", &mat[i][j]);
+			int t = scanf("%d", &mat[i][j]);
 			if(mat[i][j] == -1)
 			{
 				mat[i][j] = INF;
@@ -33,8 +36,13 @@ void generate_matrix(int **mat, int n)
 	{
 		for (j = 0; j < n; ++j)
 		{
+			if(i == j){
+				mat[i][j] = 0;
+				continue;
+			}
+
 			mat[i][j] = rand()%10000;
-			if(mat[i][j] >= 4700 && mat[i][j] <= 5300)
+			if(mat[i][j] >= 4000 && mat[i][j] < 6000)
 			{
 				mat[i][j] = INF;
 				++count;
@@ -62,7 +70,8 @@ void print_matrix(int **mat, int n)
 
 int main(int argc, char *argv[])
 {
-	srand(NULL);
+	time_t t;
+	srand((unsigned) time(&t));
 
 	int **mat;
 	int *buffer;
@@ -89,13 +98,14 @@ int main(int argc, char *argv[])
 		printf("INPUT\n");
 		// TODO can do generate specifically for processes
 		generate_matrix(mat, n);
+		//take_input(mat, n);
 		print_matrix(mat, n);
 	}
 
 	// broadcasting the whole weight matrix
 	MPI_Bcast(buffer, n*n, MPI_INT, source, MPI_COMM_WORLD);
 
-	each_row = (int)ceil(n/numprocs);
+	each_row = (int)ceil((double)n/numprocs);
 
 	for(k = 0 ; k < n ; ++k)
 	{
@@ -114,7 +124,8 @@ int main(int argc, char *argv[])
 		// broadcasting everything which has been computed
 		for (i = 0; i < numprocs; ++i)
 		{
-			MPI_Bcast(buffer + (i*each_row*n), each_row*n, MPI_INT, i, MPI_COMM_WORLD);
+			int rem = max(n - (i*each_row), 0);
+			MPI_Bcast(buffer + (i*each_row*n), min(each_row*n, rem*n), MPI_INT, i, MPI_COMM_WORLD);
 		}
 	}
 
