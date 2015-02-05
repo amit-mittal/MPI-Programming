@@ -1,6 +1,4 @@
-// TODO see if code can be made more faster
-// TODO generate rows specifically for processes
-// Optimization: 1. Use scatter and gather instead
+// Optimization: Use scatter and gather instead
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -107,6 +105,8 @@ int main(int argc, char *argv[])
 		//print_matrix(mat, n);
 	}
 
+	each_row = (int)ceil((double)n/numprocs);
+
 	// broadcasting initial
 	for (i = 0; i < numprocs; ++i)
 	{
@@ -116,8 +116,6 @@ int main(int argc, char *argv[])
 
 	// broadcasting the whole weight matrix
 	//MPI_Bcast(buffer, n*n, MPI_INT, source, MPI_COMM_WORLD);
-
-	each_row = (int)ceil((double)n/numprocs);
 
 	for(k = 0 ; k < n ; ++k)
 	{

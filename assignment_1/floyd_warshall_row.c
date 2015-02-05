@@ -1,4 +1,7 @@
 // TODO see if code can be made more faster
+// TODO generate rows specifically for processes
+// Optimization: 1. broadcast only once for that particular row
+// 				 2. after that in the end collect the data
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -41,16 +44,20 @@ void generate_matrix(int **mat, int n)
 				continue;
 			}
 
-			mat[i][j] = rand()%10000;
-			if(mat[i][j] >= 4000 && mat[i][j] < 6000)
+			int temp = rand()%100;
+			if(temp >= 30)
+			{
+				mat[i][j] = rand()%10;
+			}
+			else
 			{
 				mat[i][j] = INF;
-				++count;
+				++count;	
 			}
 		}
 	}
 
-//	printf("%d\n", count);
+//	printf("No. of INF entries: %d\n", count);
 }
 
 void print_matrix(int **mat, int n)
@@ -84,7 +91,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	source = 0;
-	n = 100;// size of graph
+	n = 1000;// size of graph
 	
 	// allocating memory to graph
 	buffer = (int *)malloc(n*n*sizeof(int));
@@ -96,10 +103,9 @@ int main(int argc, char *argv[])
 	if(myid == source)
 	{
 		printf("INPUT\n");
-		// TODO can do generate specifically for processes
 		generate_matrix(mat, n);
 		//take_input(mat, n);
-		print_matrix(mat, n);
+		//print_matrix(mat, n);
 	}
 
 	// broadcasting the whole weight matrix
@@ -132,7 +138,7 @@ int main(int argc, char *argv[])
 	if(myid == source)
 	{
 		printf("OUTPUT\n");
-		print_matrix(mat, n);
+		//print_matrix(mat, n);
 	}
 
 	MPI_Finalize();

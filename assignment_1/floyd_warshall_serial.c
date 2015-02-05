@@ -56,16 +56,16 @@ int main()
 	int i, j, k;
 	int n;
 
-	scanf("%d", &n);
-	//n = 1000;
+	//scanf("%d", &n);
+	n = 100;
 	
 	mat = (int**)malloc(n*sizeof(int*));
 	for (i = 0; i < n; ++i)
 		mat[i] = (int*)malloc(n*sizeof(int));
 
 	printf("INPUT\n");
-	//generate_matrix(mat, n);
-	take_input(mat, n);
+	generate_matrix(mat, n);
+	//take_input(mat, n);
 	//print_matrix(mat, n);
 
 
@@ -84,7 +84,7 @@ int main()
 		}
 	}
 
-	print_matrix(mat, n);
+	//print_matrix(mat, n);
 
 	return 0;
 }
