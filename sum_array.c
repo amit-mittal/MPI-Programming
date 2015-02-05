@@ -11,7 +11,7 @@ int main(int argc, char *argv[]){
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-	count = 4;
+	count = 2000;
 	source = 0;
 	tag = 1234;
 	if (myid == source)

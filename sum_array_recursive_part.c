@@ -1,3 +1,5 @@
+// TODO use actual recursive partitioning
+
 #include <mpi.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -13,7 +15,7 @@ int main(int argc, char *argv[]){
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-	count = 500000;
+	count = 4000;
 	source = 1;
 	tag = 1234;
 
