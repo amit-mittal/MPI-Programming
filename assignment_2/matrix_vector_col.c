@@ -77,9 +77,12 @@ void transpose(int **mat, int n)
 
 	for (i = 0; i < n; ++i)
 	{
-		int t = mat[i][j];
-		mat[i][j] = mat[j][i];
-		mat[j][i] = t;
+		for (j = 0; j < i; ++j)
+		{
+			int t = mat[i][j];
+			mat[i][j] = mat[j][i];
+			mat[j][i] = t;	
+		}
 	}
 }
 
@@ -115,19 +118,20 @@ int main(int argc, char *argv[])
 		generate_input(mat, b, n);
 		print_matrix(mat, n);
 		print_vector(b, n);
+		// taking transpose so that columns are contiguous
 		transpose(mat, n);
 	}
+
+	each_row = (int)ceil((double)n/numprocs);
 
 	// scattering the vector
 	myb = (int *)malloc(each_row*sizeof(int));
 	MPI_Scatter(b, each_row, MPI_INT, myb, each_row, MPI_INT, source, MPI_COMM_WORLD);
-
-	each_row = (int)ceil((double)n/numprocs);
 	
 	// scattering the matrix rows
 	mybuffer = (int *)malloc(n*each_row*sizeof(int));
 	MPI_Scatter(buffer, n*each_row, MPI_INT, mybuffer, n*each_row, MPI_INT, source, MPI_COMM_WORLD);
-	
+
 	// Multiplying vector and respective matrix rows
 	for (i = 0; i < n; ++i)
 	{
@@ -144,13 +148,15 @@ int main(int argc, char *argv[])
 	if(myid == source)
 	{
 		printf("OUTPUT\n");
+		// adding all the corresponding entries obtained
 		for (i = 0; i < n; ++i)
 		{
 			int val = 0;
 			for (j = 0; j < numprocs; ++j)
-				val+=c[(j*n)+i];
+				val+=myc[(j*n)+i];
 			c[i] = val;
 		}
+		
 		print_vector(c, n);
 	}
 
