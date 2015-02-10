@@ -92,7 +92,6 @@ int main(int argc, char *argv[])
 	take_input(mat, b, n);
 	print_matrix(mat, n);
 	print_vector(b, n);
-	
 
 	for (i = 0; i < n; ++i)
 	{
