@@ -83,6 +83,14 @@ void copy_data(int **mat, int row, int col, int size, int *buffer)
 	}
 }
 
+void copy_b(int *b, int start, int size, int *temp_b)
+{
+	int i;
+
+	for (i = 0; i < size; ++i)
+		temp_b[i] = b[start + i];
+}
+
 int main(int argc, char *argv[])
 {
 	time_t t;
@@ -90,18 +98,19 @@ int main(int argc, char *argv[])
 
 	int **mat;
 	int *buffer, *b, *c, *mybuffer, *myc, *myb;
-	int n, i, j, k, tag;
+	int n, i, j, k, tag_1, tag_2;
 	int source, each_row, each_col, dest_id, buffer_size;
 	int numprocs, myid;
 	int size[2], grid_coords[2], periodic[2], coords[2];
-	MPI_Comm grid_comm;
+	MPI_Comm grid_comm, column_comm;
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	n = 4;
-	tag = 0;
+	tag_1 = 0;
+	tag_2 = 1;
 	source = 0;
 	size[0] = size[1] = 0;
 	periodic[0] = periodic[1] = 0;
@@ -127,15 +136,19 @@ int main(int argc, char *argv[])
 	MPI_Dims_create(numprocs, 2, size);
 	MPI_Cart_create(MPI_COMM_WORLD, 2, size, periodic, 0, &grid_comm);
 	MPI_Cart_coords(grid_comm, myid, 2, grid_coords);
+	MPI_Comm_split (grid_comm, grid_coords[1], grid_coords[0], &column_comm); 
 
 	each_col = n/size[1];
 	each_row = n/size[0];
 	buffer_size = each_col*each_row;
 
-	int *temp_buffer;
+	int *temp_buffer, *temp_b;
 	temp_buffer = (int *)malloc(buffer_size*sizeof(int));
+	temp_b = (int *)malloc(each_row*sizeof(int));
 	if(myid == source)
 	{
+		// make temp_buffer and temp_b for source process
+
 		for (i = 0; i < size[0]; ++i)
 		{
 			coords[0] = i;
@@ -148,21 +161,38 @@ int main(int argc, char *argv[])
 				MPI_Cart_rank (grid_comm, coords, &dest_id);
 
 				// copy data to a buffer and needs to send
-				
 				copy_data(mat, i*each_row, j*each_col, each_row, temp_buffer);
 
 				// sending data
-				MPI_Send (temp_buffer, buffer_size, MPI_INT, dest_id, source, grid_comm);
+				MPI_Send (temp_buffer, buffer_size, MPI_INT, dest_id, tag_1, grid_comm);
 
 				// Send b also
+				if(i == j)
+				{
+					// send to all processes of same column
+					copy_data(b, i*each_row, each_row, temp_b);
+					MPI_Send (temp_b, each_row, MPI_INT, dest_id, tag_2, grid_comm);
+				}
 			}
 		}
 	}
 	else
 	{
 		// receiving the data
-		MPI_Recv (temp_buffer, buffer_size, MPI_INT, source, tag, grid_comm, MPI_STATUS_IGNORE);
+		MPI_Recv (temp_buffer, buffer_size, MPI_INT, source, tag_1, grid_comm, MPI_STATUS_IGNORE);
+
+		if(dest_id)
+		{
+			MPI_Recv (temp_b, each_row, MPI_INT, source, tag_2, grid_comm, MPI_STATUS_IGNORE);
+		}
+
+		for (i = 0; i < buffer_size; ++i)
+		{
+			printf("id: %d data=%d\n", myid, temp_buffer[i]);
+		}	
 	}
+
+	 
 
 	MPI_Finalize();
 
