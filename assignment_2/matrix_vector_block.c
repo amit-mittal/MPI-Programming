@@ -70,18 +70,15 @@ void print_vector(int *b, int n)
 	printf("\n");
 }
 
-// take transpose of the matrix
-void transpose(int **mat, int n)
+void copy_data(int **mat, int row, int col, int size, int *buffer)
 {
 	int i, j;
 
-	for (i = 0; i < n; ++i)
+	for (i = 0; i < size; ++i)
 	{
-		for (j = 0; j < i; ++j)
+		for (j = 0; j < size; ++j)
 		{
-			int t = mat[i][j];
-			mat[i][j] = mat[j][i];
-			mat[j][i] = t;	
+			buffer[(size*i)+j] = mat[row+i][col+j];
 		}
 	}
 }
@@ -93,73 +90,78 @@ int main(int argc, char *argv[])
 
 	int **mat;
 	int *buffer, *b, *c, *mybuffer, *myc, *myb;
-	int n, i, j, k;
-	int source, each_row;
+	int n, i, j, k, tag;
+	int source, each_row, each_col, dest_id, buffer_size;
 	int numprocs, myid;
+	int size[2], grid_coords[2], periodic[2], coords[2];
+	MPI_Comm grid_comm;
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
 	n = 4;
+	tag = 0;
 	source = 0;
+	size[0] = size[1] = 0;
+	periodic[0] = periodic[1] = 0;
 
 	// allocating memory to matrix
-	buffer = (int *)malloc(2*n*n*sizeof(int));// allocating extra memory
-	b = (int *)malloc(2*n*sizeof(int));// allocating extra memory
-	c = (int *)malloc(2*n*sizeof(int));// allocating extra memory
+	buffer = (int *)malloc(n*n*sizeof(int));
+	b = (int *)malloc(n*sizeof(int));
+	c = (int *)malloc(n*sizeof(int));
 	mat = (int **)malloc(n*sizeof(int *));
 	for (i = 0; i < n; ++i)
 		mat[i] = buffer + (n*i);
 
+	// matric and vectors generated
 	if(myid == source)
 	{
 		printf("INPUT\n");
 		generate_input(mat, b, n);
 		print_matrix(mat, n);
 		print_vector(b, n);
-		// taking transpose so that columns are contiguous
-		transpose(mat, n);
-
-		// TODO instead of transpose can use MPI_Dims_create
 	}
 
-	each_row = (int)ceil((double)n/numprocs);
+	// Creating virtual grid
+	MPI_Dims_create(numprocs, 2, size);
+	MPI_Cart_create(MPI_COMM_WORLD, 2, size, periodic, 0, &grid_comm);
+	MPI_Cart_coords(grid_comm, myid, 2, grid_coords);
 
-	// scattering the vector
-	myb = (int *)malloc(each_row*sizeof(int));
-	MPI_Scatter(b, each_row, MPI_INT, myb, each_row, MPI_INT, source, MPI_COMM_WORLD);
-	
-	// scattering the matrix rows
-	mybuffer = (int *)malloc(n*each_row*sizeof(int));
-	MPI_Scatter(buffer, n*each_row, MPI_INT, mybuffer, n*each_row, MPI_INT, source, MPI_COMM_WORLD);
+	each_col = n/size[1];
+	each_row = n/size[0];
+	buffer_size = each_col*each_row;
 
-	// Multiplying vector and respective matrix rows
-	for (i = 0; i < n; ++i)
-	{
-		int val = 0;
-		for (j = 0; j < each_row; ++j)
-			val+=(mybuffer[(j*n)+i]*myb[j]);
-		c[i] = val;
-	}
-
-	// Gathering the final vector rows
-	myc = (int *)malloc(n*numprocs*sizeof(int));
-	MPI_Gather(c, n, MPI_INT, myc, n, MPI_INT, source, MPI_COMM_WORLD);
-
+	int *temp_buffer;
+	temp_buffer = (int *)malloc(buffer_size*sizeof(int));
 	if(myid == source)
 	{
-		printf("OUTPUT\n");
-		// adding all the corresponding entries obtained
-		for (i = 0; i < n; ++i)
+		for (i = 0; i < size[0]; ++i)
 		{
-			int val = 0;
-			for (j = 0; j < numprocs; ++j)
-				val+=myc[(j*n)+i];
-			c[i] = val;
+			coords[0] = i;
+			for (j = 0; j < size[1]; ++j)
+			{
+				if(i == 0 && j == 0)
+					continue;
+
+				coords[1] = j;
+				MPI_Cart_rank (grid_comm, coords, &dest_id);
+
+				// copy data to a buffer and needs to send
+				
+				copy_data(mat, i*each_row, j*each_col, each_row, temp_buffer);
+
+				// sending data
+				MPI_Send (temp_buffer, buffer_size, MPI_INT, dest_id, source, grid_comm);
+
+				// Send b also
+			}
 		}
-		
-		print_vector(c, n);
+	}
+	else
+	{
+		// receiving the data
+		MPI_Recv (temp_buffer, buffer_size, MPI_INT, source, tag, grid_comm, MPI_STATUS_IGNORE);
 	}
 
 	MPI_Finalize();
