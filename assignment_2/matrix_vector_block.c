@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	int source, each_row, each_col, dest_id, buffer_size;
 	int numprocs, myid;
 	int size[2], grid_coords[2], periodic[2], coords[2];
-	MPI_Comm grid_comm, column_comm;
+	MPI_Comm grid_comm, column_comm, row_comm;
 
 	MPI_Init(&argc, &argv);
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
@@ -123,7 +123,7 @@ int main(int argc, char *argv[])
 	for (i = 0; i < n; ++i)
 		mat[i] = buffer + (n*i);
 
-	// matric and vectors generated
+	// matrix and vectors generated
 	if(myid == source)
 	{
 		printf("INPUT\n");
@@ -131,6 +131,9 @@ int main(int argc, char *argv[])
 		print_matrix(mat, n);
 		print_vector(b, n);
 	}
+
+	// Broadcasting the vector
+	MPI_Bcast (b, n, MPI_INT, source, MPI_COMM_WORLD);
 
 	// Creating virtual grid
 	MPI_Dims_create(numprocs, 2, size);
@@ -142,13 +145,12 @@ int main(int argc, char *argv[])
 	each_row = n/size[0];
 	buffer_size = each_col*each_row;
 
-	int *temp_buffer, *temp_b;
+	int *temp_buffer, *temp_b, *temp_c;
 	temp_buffer = (int *)malloc(buffer_size*sizeof(int));
 	temp_b = (int *)malloc(each_row*sizeof(int));
+	temp_c = (int *)malloc(each_row*sizeof(int));
 	if(myid == source)
 	{
-		// make temp_buffer and temp_b for source process
-
 		for (i = 0; i < size[0]; ++i)
 		{
 			coords[0] = i;
@@ -166,33 +168,49 @@ int main(int argc, char *argv[])
 				// sending data
 				MPI_Send (temp_buffer, buffer_size, MPI_INT, dest_id, tag_1, grid_comm);
 
-				// Send b also
+				/*// Send b also
 				if(i == j)
 				{
 					// send to all processes of same column
 					copy_data(b, i*each_row, each_row, temp_b);
 					MPI_Send (temp_b, each_row, MPI_INT, dest_id, tag_2, grid_comm);
-				}
+				}*/
 			}
 		}
+
+		// make temp_buffer and temp_b for source process
+		copy_data(mat, 0, 0, each_row, temp_buffer);
+		// copy_data(b, 0, each_row, temp_b);
 	}
 	else
 	{
-		// receiving the data
+		// receiving the matrix data
 		MPI_Recv (temp_buffer, buffer_size, MPI_INT, source, tag_1, grid_comm, MPI_STATUS_IGNORE);
 
-		if(dest_id)
+		/*if(dest_id)
 		{
 			MPI_Recv (temp_b, each_row, MPI_INT, source, tag_2, grid_comm, MPI_STATUS_IGNORE);
-		}
-
-		for (i = 0; i < buffer_size; ++i)
-		{
-			printf("id: %d data=%d\n", myid, temp_buffer[i]);
-		}	
+		}*/	
 	}
 
-	 
+	// Now multiply whatever matrix block you have and the correponding part of the vector
+	int index = grid_coords[1]*each_row;
+	for (i = 0; i < each_row; ++i)
+	{
+		int val = 0;
+		for (j = 0; j < each_col; ++j)
+		{
+			val+=(temp_buffer[(each_col*i)+j]*b[index+j]);// change to temp_b
+		}
+		temp_c[i] = val;
+	}
+
+	/*for (i = 0; i < buffer_size; ++i)
+		printf("myid=%d temp_buffer[%d]=%d\n", myid, i, temp_buffer[i]);
+
+	for (i = 0; i < each_row; ++i)
+		printf("myid=%d temp_c[%d]=%d\n", myid, i, temp_c[i]);*/
+
 
 	MPI_Finalize();
 
