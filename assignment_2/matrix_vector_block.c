@@ -211,6 +211,32 @@ int main(int argc, char *argv[])
 	for (i = 0; i < each_row; ++i)
 		printf("myid=%d temp_c[%d]=%d\n", myid, i, temp_c[i]);*/
 
+	// Splitting grid communicator into row communicator
+	MPI_Comm_split(grid_comm, grid_coords[0], grid_coords[1], &row_comm);
+
+	// Now transmit the data across the row
+	if(grid_coords[1] != 0) // first entry of each row
+	{
+		MPI_Send(temp_c, each_row, MPI_INT, 0, tag_1, row_comm);
+	}
+	else
+	{
+		int *temp_acc;
+		temp_acc = (int*)malloc(n*size[1]*sizeof(int));
+		for (i = 1; i < size[1]; ++i)
+		{
+			MPI_Recv(temp_acc+(i*each_col), each_col, MPI_INT, i, tag_1, row_comm, MPI_STATUS_IGNORE);
+		}
+
+		for (i = 1; i < each_row; ++i)
+		{
+			for (j = 0; j < each_col; ++j)
+			{
+				temp_c[j]+=temp_acc[(i*each_col)+j];
+			}
+		}
+	}
+
 
 	MPI_Finalize();
 
