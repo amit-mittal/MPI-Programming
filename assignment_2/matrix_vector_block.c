@@ -134,6 +134,7 @@ int main(int argc, char *argv[])
 
 	// Broadcasting the vector
 	MPI_Bcast (b, n, MPI_INT, source, MPI_COMM_WORLD);
+	// TODO Send corresponding column entries only
 
 	// Creating virtual grid
 	MPI_Dims_create(numprocs, 2, size);
@@ -205,22 +206,17 @@ int main(int argc, char *argv[])
 		temp_c[i] = val;
 	}
 
-	/*for (i = 0; i < buffer_size; ++i)
-		printf("myid=%d temp_buffer[%d]=%d\n", myid, i, temp_buffer[i]);
-
-	for (i = 0; i < each_row; ++i)
-		printf("myid=%d temp_c[%d]=%d\n", myid, i, temp_c[i]);*/
-
 	// Splitting grid communicator into row communicator
 	MPI_Comm_split(grid_comm, grid_coords[0], grid_coords[1], &row_comm);
 
-	// Now transmit the data across the row
-	if(grid_coords[1] != 0) // first entry of each row
+	if(grid_coords[1] != 0) // except first entry of each row
 	{
+		// Now transmit the data across the row
 		MPI_Send(temp_c, each_row, MPI_INT, 0, tag_1, row_comm);
 	}
 	else
 	{
+		// Receiving the vector from other processors in same row
 		int *temp_acc;
 		temp_acc = (int*)malloc(n*size[1]*sizeof(int));
 		for (i = 1; i < size[1]; ++i)
@@ -228,7 +224,8 @@ int main(int argc, char *argv[])
 			MPI_Recv(temp_acc+(i*each_col), each_col, MPI_INT, i, tag_1, row_comm, MPI_STATUS_IGNORE);
 		}
 
-		for (i = 1; i < each_row; ++i)
+		// Adding corresponding vector values
+		for (i = 1; i < size[1]; ++i)
 		{
 			for (j = 0; j < each_col; ++j)
 			{
@@ -237,12 +234,11 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	// Now combine the first column values
+	// Now combine the first column values in root process
 	if(grid_coords[1] == 0)
-	{
 		MPI_Gather(temp_c, each_row, MPI_INT, c, each_row, MPI_INT, source, column_comm);
-	}
 
+	// Finally printing the output in root process
 	if(myid == source)
 	{
 		printf("OUTPUT\n");
