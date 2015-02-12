@@ -164,6 +164,8 @@ int main(int argc, char *argv[])
 				MPI_Cart_rank (grid_comm, coords, &dest_id);
 
 				// copy data to a buffer and needs to send
+				// See below link for an alternate and better way: 
+				// http://stackoverflow.com/questions/9269399/sending-blocks-of-2d-array-in-c-using-mpi
 				copy_data(mat, i*each_row, j*each_col, each_row, temp_buffer);
 
 				// sending data
@@ -197,7 +199,6 @@ int main(int argc, char *argv[])
 	// Now multiply whatever matrix block you have and the correponding part of the vector
 	int index = grid_coords[1]*each_row;
 	for (i = 0; i < each_row; ++i)
-	{
 		int val = 0;
 		for (j = 0; j < each_col; ++j)
 			val+=(temp_buffer[(each_col*i)+j]*b[index+j]);// change to temp_b
