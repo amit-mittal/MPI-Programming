@@ -28,14 +28,14 @@ void generate_input(int **mat, int *b, int n)
 	{
 		for (j = 0; j < n; ++j)
 		{
-			int temp = rand()%100;
+			int temp = rand()%10;
 			mat[i][j] = temp;
 		}
 	}
 
 	for (j = 0; j < n; ++j)
 	{
-		int temp = rand()%100;
+		int temp = rand()%10;
 		b[j] = temp;
 	}
 }

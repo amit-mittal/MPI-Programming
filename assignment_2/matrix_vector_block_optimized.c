@@ -101,7 +101,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-	n = 500;
+	n = 4;
 	tag_1 = 0;
 	tag_2 = 1;
 	source = 0;
@@ -121,8 +121,8 @@ int main(int argc, char *argv[])
 	{
 		printf("INPUT\n");
 		generate_input(mat, b, n);
-		//print_matrix(mat, n);
-		//print_vector(b, n);
+		print_matrix(mat, n);
+		print_vector(b, n);
 	}
 
 	// Creating virtual grid
@@ -187,20 +187,14 @@ int main(int argc, char *argv[])
 		temp_c[i] = val;
 	}
 
-	if(grid_coords[1] != 0) // except first entry of each row
-	{
-		// Now transmit the data across the row
-		MPI_Send(temp_c, each_row, MPI_INT, 0, tag_1, row_comm);
-	}
-	else
-	{
-		// Receiving the vector from other processors in same row
-		int *temp_acc;
-		temp_acc = (int*)malloc(n*size[1]*sizeof(int));
-		for (i = 1; i < size[1]; ++i)
-			MPI_Recv(temp_acc+(i*each_col), each_col, MPI_INT, i, tag_1, row_comm, MPI_STATUS_IGNORE);
+	// Gathering data of the same row in the first process of each row
+	int *temp_acc;
+	temp_acc = (int*)malloc(n*size[1]*sizeof(int));
+	MPI_Gather(temp_c, each_row, MPI_INT, temp_acc, each_row, MPI_INT, source, row_comm);
 
-		// Adding corresponding vector values
+	// Adding corresponding vector values
+	if(grid_coords[1] == 0)
+	{
 		for (i = 1; i < size[1]; ++i)
 		{
 			for (j = 0; j < each_col; ++j)
@@ -218,7 +212,7 @@ int main(int argc, char *argv[])
 	if(myid == source)
 	{
 		printf("OUTPUT\n");
-		//print_vector(c, n);
+		print_vector(c, n);
 	}
 
 	MPI_Finalize();
