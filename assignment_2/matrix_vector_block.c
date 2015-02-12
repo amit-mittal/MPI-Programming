@@ -237,6 +237,18 @@ int main(int argc, char *argv[])
 		}
 	}
 
+	// Now combine the first column values
+	if(grid_coords[1] == 0)
+	{
+		MPI_Gather(temp_c, each_row, MPI_INT, c, each_row, MPI_INT, source, column_comm);
+	}
+
+	if(myid == source)
+	{
+		printf("OUTPUT\n");
+		print_vector(c, n);
+	}
+
 
 	MPI_Finalize();
 
