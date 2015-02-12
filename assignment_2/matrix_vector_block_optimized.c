@@ -84,6 +84,43 @@ void copy_data(int **mat, int row, int col, int size, int *buffer)
 	}
 }
 
+// Scatters the matrix across the communicator
+void scatter_matrix(int *buff, int *local_array, int process, int n, int col, int rank, int nprocs)
+{
+	int i,j;
+	int sizes[2] = {n, n};
+	int subsizes[2] = {col, col};
+	int starts[2] = {0, 0};
+	MPI_Datatype type, subarrtype;
+	
+	MPI_Type_create_subarray(2, sizes, subsizes, starts, MPI_ORDER_C, MPI_INT, &type);
+	MPI_Type_create_resized(type, 0, col*sizeof(int), &subarrtype);
+	MPI_Type_commit(&subarrtype);
+
+	int *sendcnt = malloc(nprocs*sizeof(int));
+	int *disp = malloc(nprocs*sizeof(int));
+
+	if(rank == 0)
+	{
+		for(i=0;i<nprocs;i++)
+			sendcnt[i]=1;
+
+		int d = 0;
+		for(i=0;i<process;i++)
+		{
+			for(j=0;j<process;j++)
+			{
+				disp[i*process+j]=d;
+				d+=1;
+			}
+		
+			d+=(col-1)*process;
+		}
+	}
+
+	MPI_Scatterv(buff, sendcnt, disp, subarrtype, local_array, col*col, MPI_INT, 0, MPI_COMM_WORLD);
+}
+
 int main(int argc, char *argv[])
 {
 	time_t t;
@@ -101,7 +138,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-	n = 4;
+	n = 1000;
 	tag_1 = 0;
 	tag_2 = 1;
 	source = 0;
@@ -121,8 +158,8 @@ int main(int argc, char *argv[])
 	{
 		printf("INPUT\n");
 		generate_input(mat, b, n);
-		print_matrix(mat, n);
-		print_vector(b, n);
+		//print_matrix(mat, n);
+		//print_vector(b, n);
 	}
 
 	// Creating virtual grid
@@ -146,8 +183,10 @@ int main(int argc, char *argv[])
 	
 	//Broadcasting the part of vector across the same columns
 	MPI_Bcast (temp_b, each_row, MPI_INT, 0, column_comm);
-
-	if(myid == source)
+ 
+	// TODO optimization: each process should read its own chunk of data
+	scatter_matrix(buffer, temp_buffer, size[0], n, each_row, myid, numprocs);
+	/*if(myid == source)
 	{
 		for (i = 0; i < size[0]; ++i)
 		{
@@ -175,7 +214,7 @@ int main(int argc, char *argv[])
 	{
 		// receiving the matrix data
 		MPI_Recv (temp_buffer, buffer_size, MPI_INT, source, tag_1, grid_comm, MPI_STATUS_IGNORE);	
-	}
+	}*/
 
 	// Now multiply whatever matrix block you have and the correponding part of the vector
 	int index = grid_coords[1]*each_row;
@@ -212,7 +251,7 @@ int main(int argc, char *argv[])
 	if(myid == source)
 	{
 		printf("OUTPUT\n");
-		print_vector(c, n);
+		//print_vector(c, n);
 	}
 
 	MPI_Finalize();
