@@ -150,12 +150,7 @@ int main(int argc, char *argv[])
 
 	// Scattering the vector across first row of processors
 	MPI_Scatter(b, each_row, MPI_INT, temp_b, each_row, MPI_INT, 0, row_comm);
-
-	MPI_Scatter(buffer, buffer_size, MPI_INT, temp_buffer, buffer_size, MPI_INT, source, grid_comm);
-	for (i = 0; i < buffer_size; ++i)
-	{
-		printf("myid=%d temp_buffer[%d]=%d\n", myid, i, temp_buffer[i]);
-	}
+	MPI_Bcast (temp_b, each_row, MPI_INT, 0, column_comm);
 
 	if(myid == source)
 	{
