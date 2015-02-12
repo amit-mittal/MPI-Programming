@@ -200,9 +200,7 @@ int main(int argc, char *argv[])
 	{
 		int val = 0;
 		for (j = 0; j < each_col; ++j)
-		{
 			val+=(temp_buffer[(each_col*i)+j]*b[index+j]);// change to temp_b
-		}
 		temp_c[i] = val;
 	}
 
@@ -220,9 +218,7 @@ int main(int argc, char *argv[])
 		int *temp_acc;
 		temp_acc = (int*)malloc(n*size[1]*sizeof(int));
 		for (i = 1; i < size[1]; ++i)
-		{
 			MPI_Recv(temp_acc+(i*each_col), each_col, MPI_INT, i, tag_1, row_comm, MPI_STATUS_IGNORE);
-		}
 
 		// Adding corresponding vector values
 		for (i = 1; i < size[1]; ++i)
@@ -244,7 +240,6 @@ int main(int argc, char *argv[])
 		printf("OUTPUT\n");
 		print_vector(c, n);
 	}
-
 
 	MPI_Finalize();
 
