@@ -104,6 +104,7 @@ int main(int argc, char *argv[])
 	n = 4;
 	source = 0;
 
+	// TODO instead use scatterv and gatherv
 	// allocating memory to matrix
 	buffer = (int *)malloc(2*n*n*sizeof(int));// allocating extra memory
 	b = (int *)malloc(2*n*sizeof(int));// allocating extra memory
