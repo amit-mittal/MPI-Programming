@@ -108,7 +108,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-	n = 4;
+	n = 1000;
 	tag_1 = 0;
 	tag_2 = 1;
 	source = 0;
@@ -128,8 +128,8 @@ int main(int argc, char *argv[])
 	{
 		printf("INPUT\n");
 		generate_input(mat, b, n);
-		print_matrix(mat, n);
-		print_vector(b, n);
+		//print_matrix(mat, n);
+		//print_vector(b, n);
 	}
 
 	// Broadcasting the vector
@@ -238,7 +238,7 @@ int main(int argc, char *argv[])
 	if(myid == source)
 	{
 		printf("OUTPUT\n");
-		print_vector(c, n);
+//		print_vector(c, n);
 	}
 
 	MPI_Finalize();

@@ -70,6 +70,7 @@ void print_vector(int *b, int n)
 	printf("\n");
 }
 
+// Copies the 2-d matrix to a 1-d buffer
 void copy_data(int **mat, int row, int col, int size, int *buffer)
 {
 	int i, j;
@@ -81,14 +82,6 @@ void copy_data(int **mat, int row, int col, int size, int *buffer)
 			buffer[(size*i)+j] = mat[row+i][col+j];
 		}
 	}
-}
-
-void copy_b(int *b, int start, int size, int *temp_b)
-{
-	int i;
-
-	for (i = 0; i < size; ++i)
-		temp_b[i] = b[start + i];
 }
 
 int main(int argc, char *argv[])
@@ -108,7 +101,7 @@ int main(int argc, char *argv[])
 	MPI_Comm_size(MPI_COMM_WORLD, &numprocs);
 	MPI_Comm_rank(MPI_COMM_WORLD, &myid);
 
-	n = 4;
+	n = 500;
 	tag_1 = 0;
 	tag_2 = 1;
 	source = 0;
@@ -128,8 +121,8 @@ int main(int argc, char *argv[])
 	{
 		printf("INPUT\n");
 		generate_input(mat, b, n);
-		print_matrix(mat, n);
-		print_vector(b, n);
+		//print_matrix(mat, n);
+		//print_vector(b, n);
 	}
 
 	// Creating virtual grid
@@ -150,6 +143,8 @@ int main(int argc, char *argv[])
 
 	// Scattering the vector across first row of processors
 	MPI_Scatter(b, each_row, MPI_INT, temp_b, each_row, MPI_INT, 0, row_comm);
+	
+	//Broadcasting the part of vector across the same columns
 	MPI_Bcast (temp_b, each_row, MPI_INT, 0, column_comm);
 
 	if(myid == source)
@@ -188,7 +183,7 @@ int main(int argc, char *argv[])
 	{
 		int val = 0;
 		for (j = 0; j < each_col; ++j)
-			val+=(temp_buffer[(each_col*i)+j]*temp_b[j]);// change to temp_b
+			val+=(temp_buffer[(each_col*i)+j]*temp_b[j]);
 		temp_c[i] = val;
 	}
 
@@ -223,7 +218,7 @@ int main(int argc, char *argv[])
 	if(myid == source)
 	{
 		printf("OUTPUT\n");
-		print_vector(c, n);
+		//print_vector(c, n);
 	}
 
 	MPI_Finalize();

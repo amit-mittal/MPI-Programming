@@ -77,7 +77,7 @@ int main(int argc, char *argv[])
 	int *buffer, *b, *c;
 	int n, i, j, k;
 
-	n = 3;
+	n = 500;
 
 	// allocating memory to matrix
 	buffer = (int *)malloc(n*n*sizeof(int));
@@ -88,10 +88,10 @@ int main(int argc, char *argv[])
 		mat[i] = buffer + (n*i);
 
 	printf("INPUT\n");
-	//generate_input(mat, b, n);
-	take_input(mat, b, n);
-	print_matrix(mat, n);
-	print_vector(b, n);
+	generate_input(mat, b, n);
+	//take_input(mat, b, n);
+	//print_matrix(mat, n);
+	//print_vector(b, n);
 
 	for (i = 0; i < n; ++i)
 	{
@@ -102,7 +102,7 @@ int main(int argc, char *argv[])
 	}
 
 	printf("OUTPUT\n");
-	print_vector(c, n);
+	//print_vector(c, n);
 
 	return 0;
 }
