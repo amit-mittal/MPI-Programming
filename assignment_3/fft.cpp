@@ -12,15 +12,13 @@ void generate_polynomials(vector< complex<double> > &a, int n)
 {
 	for (int i = 0; i < n; ++i)
 	{
-		double t = 1.0;
-		//double t = (double)(rand()%10);
+		double t = (double)(rand()%10);
 		a.push_back(polar(t, 0.0));
 	}
 
 	for (int i = 0; i < n; ++i)
 	{
 		double t = 0.0;
-		//double t = (double)(rand()%10);
 		a.push_back(polar(t, 0.0));
 	}
 }
@@ -82,7 +80,7 @@ int main(int argc, char *argv[])
 	srand((unsigned) time(&t));
 
 	vector< complex<double> >  a, b, c;
-	int n = 2;
+	int n = 4;
 	int n_f = (2*n) - 1;
 
 	generate_polynomials(a, n);
