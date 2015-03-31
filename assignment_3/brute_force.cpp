@@ -30,14 +30,14 @@ int main(int argc, char *argv[])
 	srand((unsigned) time(&t));
 
 	vector<int>  a, b, c;
-	int n = 4;
+	int n = 8192;
 	int n_f = (2*n) - 1;
 
 	generate_polynomials(a, n);
 	generate_polynomials(b, n);
 
-	print_polynomials(a);
-	print_polynomials(b);
+	// print_polynomials(a);
+	// print_polynomials(b);
 	
 	c.resize(n_f);
 	for (int i = 0; i < n; ++i)
@@ -48,7 +48,7 @@ int main(int argc, char *argv[])
 		}
 	}
 
-	print_polynomials(c);
+	// print_polynomials(c);
 
 	return 0;
 }

@@ -80,14 +80,14 @@ int main(int argc, char *argv[])
 	srand((unsigned) time(&t));
 
 	vector< complex<double> >  a, b, c;
-	int n = 4;
+	int n = 8192;
 	int n_f = (2*n) - 1;
 
 	generate_polynomials(a, n);
 	generate_polynomials(b, n);
 
-	print_polynomials(a);
-	print_polynomials(b);
+	//print_polynomials(a);
+	//print_polynomials(b);
 	
 	double angle = (double) (M_PI)/n;
 	complex<double> w = polar(1.0, angle);
@@ -107,7 +107,7 @@ int main(int argc, char *argv[])
 		c[i] = c[i]/n_complex;
 	}
 
-	print_polynomials(c);
+	//print_polynomials(c);
 
 	return 0;
 }
