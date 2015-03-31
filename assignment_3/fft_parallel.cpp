@@ -8,6 +8,8 @@
 
 using namespace std;
 
+int free_threads = 2;
+
 void generate_polynomial(vector< complex<double> > &a, int n)
 {
 	for (int i = 0; i < n; ++i)
@@ -34,7 +36,8 @@ void fft(vector< complex<double> > a, complex<double> w, vector< complex<double>
 	int n = a.size();
 	f_a.resize(n);
 
-	if(n == 1){
+	if(n == 1)
+	{
 		f_a[0] = a[0];
 		return;
 	}
@@ -48,8 +51,39 @@ void fft(vector< complex<double> > a, complex<double> w, vector< complex<double>
 			a_odd.push_back(a[i]);
 	}
 
-	fft(a_even, pow(w, 2), f_even);
-	fft(a_odd, pow(w, 2), f_odd);
+	thread t_even, t_odd;
+
+	if(free_threads > 0)
+	{
+		t_even = thread(fft, a_even, pow(w, 2), ref(f_even));
+		free_threads -= 1;
+	}
+	else
+	{
+		fft(a_even, pow(w, 2), f_even);
+	}
+
+	if(free_threads > 0)
+	{
+		t_odd = thread(fft, a_odd, pow(w, 2), ref(f_odd));
+		free_threads -= 1;
+	}
+	else
+	{
+		fft(a_odd, pow(w, 2), f_odd);
+	}
+
+	if(t_even.joinable())
+	{
+		t_even.join();
+		free_threads += 1;
+	}
+
+	if (t_odd.joinable())
+	{
+		t_odd.join();
+		free_threads += 1;
+	}
 
 	complex<double> x = polar(1.0, 0.0);
 	for(int i = 0 ; i < (n/2) ; ++i)
@@ -65,7 +99,7 @@ int main(int argc, char *argv[])
 	time_t t;
 	srand((unsigned) time(&t));
 
-	int n = 4;
+	int n = 8192;
 	int n_f = (2*n) - 1;
 
 	vector< complex<double> >  a, b, c, f_a, f_b, f_c;
@@ -76,12 +110,15 @@ int main(int argc, char *argv[])
 	generate_polynomial(a, n);
 	generate_polynomial(b, n);
 
-	print_polynomial(a);
-	print_polynomial(b);
+	// print_polynomial(a);
+	// print_polynomial(b);
 
 	// Step 1
-	fft(a, w, f_a);
-	fft(b, w, f_b);
+	thread t_a(fft, a, w, ref(f_a));
+	thread t_b(fft, b, w, ref(f_b));
+
+	t_a.join(); free_threads += 1;
+	t_b.join(); free_threads += 1;
 	
 	// Step 2
 	for(int i = 0 ; i < 2*n ; ++i)
@@ -94,7 +131,7 @@ int main(int argc, char *argv[])
 	for(int i = 0 ; i < n_f ; ++i)
 		c[i] = c[i]/n_complex;
 
-	print_polynomial(c);
+	// print_polynomial(c);
 
 	return 0;
 }
