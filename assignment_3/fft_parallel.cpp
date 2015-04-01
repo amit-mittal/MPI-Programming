@@ -53,26 +53,29 @@ void fft(vector< complex<double> > a, complex<double> w, vector< complex<double>
 
 	thread t_even, t_odd;
 
+	// if some free thread is available, making a new thread for FFT else doing serial execution
 	if(free_threads > 0)
 	{
 		t_even = thread(fft, a_even, pow(w, 2), ref(f_even));
-		free_threads -= 1;
+		free_threads -= 1; // if this statement is above, program becomes slow
 	}
 	else
 	{
 		fft(a_even, pow(w, 2), f_even);
 	}
 
+	// if some free thread is available, making a new thread for FFT else doing serial execution
 	if(free_threads > 0)
 	{
 		t_odd = thread(fft, a_odd, pow(w, 2), ref(f_odd));
-		free_threads -= 1;
+		free_threads -= 1; // if this statement is above, program becomes slow
 	}
 	else
 	{
 		fft(a_odd, pow(w, 2), f_odd);
 	}
 
+	// Synchronizing two threads
 	if(t_even.joinable())
 	{
 		t_even.join();
@@ -99,7 +102,7 @@ int main(int argc, char *argv[])
 	time_t t;
 	srand((unsigned) time(&t));
 
-	int n = 8192;
+	int n = 1024*1024;
 	int n_f = (2*n) - 1;
 
 	vector< complex<double> >  a, b, c, f_a, f_b, f_c;
