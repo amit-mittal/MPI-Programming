@@ -1,3 +1,7 @@
+// IMPROVEMENTS POSSIBLE
+// 1. Do multiplication of FFT in parallel
+// 2. Create a thread pool and make sure each thread is always running
+
 #include <iostream>
 #include <stdio.h>
 #include <stdlib.h>
@@ -52,6 +56,14 @@ void fft(vector< complex<double> > a, complex<double> w, vector< complex<double>
 	}
 
 	thread t_even, t_odd;
+
+	/**
+	 * IMPORTANT
+	 * Ideally a lock should be used to check the value of free_threads
+	 * and when we are decrementing the number of free_threads so, that
+	 * the variable becomes thread safe
+	 * We are not doing as it may further slow down the program
+	 */
 
 	// if some free thread is available, making a new thread for FFT else doing serial execution
 	if(free_threads > 0)
