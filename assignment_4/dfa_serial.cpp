@@ -34,7 +34,7 @@ using namespace std;
 
 int transitions[MAX_DFA_STATES][MAX_ALPHABET_SIZE];
 bool finalStates[MAX_DFA_STATES];
-int input_string[100000];
+int input_string[1000000];
 
 int main()  {
     int N, M, F, X, Y, A, state, symbol, i, j, len;
