@@ -1,0 +1,55 @@
+DFA STRING MEMBERSHIP
+=======================
+
+Experimental Observation
+------------------------
+
+For n = 700,000
+----------------
+Serial: 0.143s
+Parallel: 0.169s
+
+Algorithm
+----------
+
+Sequential
+----------
+Input : transition function δ, input string Str, start state q0, set of final states F
+Output: true if input is matched, false otherwise
+
+state ← q0
+for i ← 0 to |Str| − 1 do
+	state ← δ(state, Str[i])
+if state ∈ F then
+	return true; 							// input matched
+return false
+
+Parallel
+--------
+Input : δ, Q, P, Str = c0c1 ... c|P|−1
+Output: vector Li for each chunk ci
+
+for i ← 0 to |P| − 1 do in parallel
+	for j ← 0 to |Q| − 1 do
+		Li[j] ← j ; 						// initialize vector Li
+	Start ← StartPos(ci)
+	End ← EndPos(ci)
+	
+	if i = 0 then // chunk c0
+		for k ← Start to End do
+			L0[0] ← δ(L0[0], Str[k])
+	else 									// chunks c1 ... c|P|−1
+		foreach j ∈ Q do
+			for k ← Start to End do
+				Li[j] ← δ(Li[j], Str[k])
+
+state = L|P|−1[L|P|−2[...L0[0] ...]]
+if state ∈ F then
+	return true; 							// input matched
+return false
+
+
+Time Complexity of Serial = O(n)
+Time Complexity of Parallel = O(n/p + p) 
+where n = length of string
+	  p = no. of threads running in parallel

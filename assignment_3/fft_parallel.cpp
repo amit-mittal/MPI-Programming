@@ -9,6 +9,7 @@
 #include <complex>
 #include <vector>
 #include <thread>
+#include <omp.h>
 
 using namespace std;
 
@@ -136,13 +137,16 @@ int main(int argc, char *argv[])
 	t_b.join(); free_threads += 1;
 	
 	// Step 2
+	f_c.resize(2*n);
+//	#pragma omp parallel for
 	for(int i = 0 ; i < 2*n ; ++i)
-		f_c.push_back(f_a[i]*f_b[i]);
+		f_c[i] = (f_a[i]*f_b[i]);
 	
 	// Step 3
 	fft(f_c, conj(w), c);
 	
 	// Step 4
+//	#pragma omp parallel for
 	for(int i = 0 ; i < n_f ; ++i)
 		c[i] = c[i]/n_complex;
 

@@ -63,44 +63,45 @@ int main()  {
     
 
     // ==============PARALLEL IMPLEMENTATION==============
-    int total_threads = 4;
+    int total_threads = 2;
     int each_part = ceil((double)len/total_threads);
     int states[total_threads][N];
     
     #pragma omp parallel for
-    for(i=0;i<total_threads;++i){
+    for(int i=0;i<total_threads;++i){
         for (int j = 0; j < N; ++j){
             states[i][j] = j;
         }
     }
 
     // simulate the DFA
-    #pragma omp parallel num_threads(total_threads) shared(states)
+    omp_set_nested(true);
+    #pragma omp parallel num_threads(total_threads)
     {
         int thread_id = omp_get_thread_num();
         int start = thread_id*each_part;
         int end = min(len, start + each_part);
         if(thread_id == 0)
-        {            
+        {
             int q = 0;
-            for (i = start; i < end; ++i)
+            for (int i = start; i < end; ++i)
             {
-                symbol = input_string[i];
-                q = transitions[q][symbol];
+                q = transitions[q][input_string[i]];
             }
-            states[0][0] = q;  
+            states[0][0] = q;
         }
         else
         {
+            // Below is slowing down the program
+            #pragma omp parallel num_threads(total_threads)
             for (int q = 0; q < N; ++q)
             {
-                state = q;
-                for (i = start; i < end; ++i)
+                int state = q;
+                for (int i = start; i < end; ++i)
                 {
-                    symbol = input_string[i];
-                    state = transitions[state][symbol];
+                    state = transitions[state][input_string[i]];
                 }
-                states[thread_id][q] = state;    
+                states[thread_id][q] = state;
             }
         }
     }

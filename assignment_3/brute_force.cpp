@@ -30,7 +30,7 @@ int main(int argc, char *argv[])
 	srand((unsigned) time(&t));
 
 	vector<int>  a, b, c;
-	int n = 256*256;
+	int n = 2048;
 	int n_f = (2*n) - 1;
 
 	generate_polynomials(a, n);
